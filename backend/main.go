@@ -22,6 +22,7 @@ type Config struct {
 }
 
 type Film struct {
+	Id                  string
 	Annotation          string
 	FilmName            string
 	ForeignName         string
@@ -46,22 +47,17 @@ type SearchResponse []Film
 
 type RegisterMovies struct {
 	config Config
-	ctx context.Context
+	ctx    context.Context
 	client *mongo.Client
 }
 
-func (rm *RegisterMovies)SearchByName(req SearchRequest) (searchResponse SearchResponse, _ error) {
+func (rm *RegisterMovies) SearchByName(query SearchRequest) (searchResponse SearchResponse, _ error) {
 	collection := rm.client.Database(rm.config.DataBase).Collection(rm.config.Collection)
 
-	cursor, err := collection.Find(rm.ctx,
-		bson.D{bson.E{"$text", bson.D{bson.E{"$search", req}}}},
-		options.Find().
-			SetSort(bson.D{bson.E{"score", bson.D{bson.E{"$meta", "textScore"}}}}).
-			SetLimit(20).
-			SetProjection(bson.M{
-				"_id":                 0,
-				"Id":                  "$_id",
-			    "Annotation":          "$data.general.annotation",
+	cursor, err := collection.Aggregate(rm.ctx, []bson.M{
+		{"$match": bson.M{"$text": bson.M{"$search": query}}},
+		{"$group": bson.M{
+			"_id": bson.M{
 				"FilmName":            "$data.general.filmname",
 				"ForeignName":         "$data.general.foreignName",
 				"Studio":              "$data.general.studio",
@@ -75,18 +71,45 @@ func (rm *RegisterMovies)SearchByName(req SearchRequest) (searchResponse SearchR
 				"NumberOfSeries":      "$data.general.numberOfSeries",
 				"DurationMinute":      "$data.general.durationMinute",
 				"DurationHour":        "$data.general.durationHour",
-				"ViewMovie":           "$data.general.viewMovie", 
+				"ViewMovie":           "$data.general.viewMovie",
 				"CountryOfProduction": "$data.general.countryOfProduction",
-			}).
-			SetMaxTime(3 * time.Second),
+			},
+			"TextScore": bson.M{"$avg": bson.M{"$meta": "textScore"}},
+			"ObjectId":  bson.M{"$min": "$_id"},
+		}},
+		{"$project": bson.M{
+			"Id":                  "$ObjectId",
+			"_id":                 0,
+			"TextScore":           "$TextScore",
+			"FilmName":            "$_id.FilmName",
+			"ForeignName":         "$_id.ForeignName",
+			"Studio":              "$_id.Studio",
+			"YearOfProduction":    "$_id.YearOfProduction",
+			"Director":            "$_id.Director",
+			"ScriptAuthor":        "$_id.ScriptAuthor",
+			"Composer":            "$_id.Composer",
+			"Cameraman":           "$_id.Cameraman",
+			"ArtDirector":         "$_id.ArtDirector",
+			"Producer":            "$_id.Producer",
+			"NumberOfSeries":      "$_id.NumberOfSeries",
+			"DurationMinute":      "$_id.DurationMinute",
+			"DurationHour":        "$_id.DurationHour",
+			"ViewMovie":           "$_id.ViewMovie",
+			"CountryOfProduction": "$data.general.countryOfProduction",
+		}},
+		{"$sort": bson.M{"TextScore": -1}},
+		{"$limit": 20},
+	}, options.Aggregate().
+		SetMaxTime(3*time.Second).
+		SetComment(fmt.Sprintf("RegisterMovies.SearchByName(%v)", query)),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("fail to find for film for request '%s': %w", req, err)
+		return nil, fmt.Errorf("fail to find for film for request '%s': %w", query, err)
 	}
 
 	err = cursor.All(rm.ctx, &searchResponse)
 	if err != nil {
-		return nil, fmt.Errorf("fail to parce search result for request '%s': %w", req, err)
+		return nil, fmt.Errorf("fail to parce search result for request '%s': %w", query, err)
 	}
 
 	return searchResponse, nil
@@ -98,7 +121,8 @@ type App struct {
 
 var _ http.HandlerFunc = (*App)(nil).SearchByName
 
-func (a *App)SearchByName(w http.ResponseWriter, r *http.Request) {
+func (a *App) SearchByName(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:63343")
 
 	_query, ok := r.URL.Query()["q"]
 	if !ok || len(_query) != 1 || len(_query[0]) == 0 {
@@ -123,7 +147,6 @@ func (a *App)SearchByName(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(listOfFilms)
 }
 
-
 func main() {
 	ctx := context.Background()
 
@@ -144,10 +167,14 @@ func main() {
 
 	defer client.Disconnect(ctx)
 
-	err = client.Ping(ctx, nil)
+	_ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	err = client.Ping(_ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	cancel()
+
+	log.Print("Connected to MongoDb: ", config.MongoDB)
 
 	app := App{
 		registerMovies: RegisterMovies{
