@@ -119,10 +119,12 @@ db.RegisterMovies.aggregate([
                 ViewMovie: "$data.general.viewMovie",
                 CountryOfProduction: "$data.general.countryOfProduction"
             },
-            TextScore: {$avg: {$meta:"textScore"}},
+            TextScore: {$avg: {$meta: "textScore"}},
+            ObjectId: {$min: "$_id"}
         }},
     {$project: {
             TextScore: "$TextScore",
+            Id: "$ObjectId",
             _id: 0,
             FilmName: "$_id.FilmName",
             ForeignName: "$_id.ForeignName",
