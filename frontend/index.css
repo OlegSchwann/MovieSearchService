@@ -1,0 +1,96 @@
+*, ::before, ::after {
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.font {
+    font-family: 'Roboto', sans-serif;
+}
+
+.container {
+    display: grid;
+    grid-template-rows: [header-start] 6rem [header-end hr-start] 1px [hr-end result-start] auto [result-end];
+    grid-template-columns: [start] 5rem [main-start] 40rem [main-end] auto [end];
+}
+
+.hr {
+    grid-row: hr-start / hr-end;
+    grid-column: start / end;
+    background: gray;
+}
+
+.search-form {
+    grid-row: header-start / header-end;
+    grid-column: main-start / main-end;
+    border: 1px solid gray;
+    border-radius: 5px;
+    margin: 1.5rem 0
+}
+
+.search-form_container {
+    display: grid;
+    grid-template-columns: [input-start] auto [input-end button-start] 2.5rem [button-end];
+}
+
+.search-form_input {
+    border: none;
+    font: inherit;
+    grid-column: input-start / input-end;
+    padding: 0.5rem;
+    border-radius: inherit;
+}
+
+.search-form_button {
+    grid-column: button-start / button-end;
+    align-self: center;
+    justify-self: center;
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.search-results {
+    grid-column: main-start / main-end;
+    grid-row: result-start / result-end;
+    margin: 1rem 0;
+}
+
+.search-result {
+    margin: 0.9rem 0;
+}
+
+.search-result_film-location {
+    font-size: small;
+    color: darkgrey;
+}
+
+.search-result_film-name {
+    font-size: larger;
+    color: #1a0dab;
+}
+
+.search-result_film-description {
+    display: grid;
+    grid-template-columns: [annotation-start key-start] 13.5rem [key-end value-start] 26.5rem  [value-end annotation-end];
+}
+
+.search-result_film-description_annotation {
+    grid-column: annotation-start / annotation-end;
+    margin-bottom: 0.25rem;
+}
+
+.search-result_film-description_key {
+    grid-column: key-start / key-end;
+}
+
+.search-result_film-description_value {
+    grid-column: value-start / value-end;
+}

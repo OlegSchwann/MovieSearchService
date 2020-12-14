@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>поиск фильмов сериалов</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/vue@next"></script>
+    <script defer src="index.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body id="app" class="container font">
+<div class="search-form search-form_container">
+    <input type="text" class="search-form_input" autofocus placeholder="фильм, сериал..." v-model="SearchRequest" v-on:input="SearchFilm">
+    <img class="search-form_button" src="magnifier.svg">
+</div>
+<div class="hr"></div>
+<main class="search-results">
+    <div class="search-result" v-for="SearchResult in SearchResults" v-bind:key="SearchResult.Id">
+        <div class="search-result_film-location">
+            <template v-if="SearchResult.YearOfProduction !== ''">{{ SearchResult.YearOfProduction }},</template>
+            <template v-if="SearchResult.CountryOfProduction !== ''">{{ SearchResult.CountryOfProduction }},</template>
+            <template v-if="SearchResult.Studio !== ''">{{ SearchResult.Studio }}</template>
+        </div>
+        <div class="search-result_film-name">
+            <template v-if="SearchResult.FilmName !== ''">{{ SearchResult.FilmName }}</template>
+            <template v-if="SearchResult.ForeignName !== '' && SearchResult.ForeignName !== SearchResult.FilmName">({{ SearchResult.ForeignName }})</template>
+        </div>
+        <div class="search-result_film-description">
+            <template v-if="SearchResult.Annotation !== ''">
+                <div class="search-result_film-description_annotation">{{ SearchResult.Annotation }}</div>
+            </template>
+            <template v-if="SearchResult.Director !== ''">
+                <div class="search-result_film-description_key">Директор:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.Director }}</div>
+            </template>
+            <template v-if="SearchResult.ScriptAuthor !== ''">
+                <div class="search-result_film-description_key">Автор сценария:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.ScriptAuthor }}</div>
+            </template>
+            <template v-if="SearchResult.Composer !== ''">
+                <div class="search-result_film-description_key">Композитор:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.Composer }}</div>
+            </template>
+            <template v-if="SearchResult.Cameraman !== ''">
+                <div class="search-result_film-description_key">Оператор:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.Cameraman }}</div>
+            </template>
+            <template v-if="SearchResult.ArtDirector !== ''">
+                <div class="search-result_film-description_key">Художественный&nbsp;директор:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.ArtDirector }}</div>
+            </template>
+            <template v-if="SearchResult.Producer !== ''">
+                <div class="search-result_film-description_key">Продюсер:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.Producer }}</div>
+            </template>
+            <template v-if="SearchResult.NumberOfSeries !== '' && SearchResult.NumberOfSeries !== '1'">
+                <div class="search-result_film-description_key">Серий:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.NumberOfSeries }}</div>
+            </template>
+            <template v-if="SearchResult.DurationHour !== '' && SearchResult.DurationMinute !== ''">
+                <div class="search-result_film-description_key">Длительность:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.DurationHour }}:{{ SearchResult.DurationMinute }}</div>
+            </template>
+            <template v-if=" SearchResult.ViewMovie !== ''">
+                <div class="search-result_film-description_key">Жанр:</div>
+                <div class="search-result_film-description_value">{{ SearchResult.ViewMovie }}</div>
+            </template>
+        </div>
+    </div>
+</main>
+</body>
+</html>
